@@ -1,23 +1,45 @@
-package detector
+package pkg
 
-import "sync"
+import (
+	"sync"
+	"time"
+)
 
-type Pulser struct {
-	ID     string
-	name   string
-	status string
-	mutex  sync.Mutex
+type State int
+
+const (
+	Alive   State = iota
+	Dead    State = iota
+	Pending State = iota
+)
+
+type Node struct {
+	IpAddr         string
+	Port           string
+	Status         State
+	LastConnected  time.Time
+	InitialConnect time.Time
 }
 
-func Initialize() (*Pulser, chan interface{}, error) {
+type Pulser struct {
+	ID       string
+	name     string
+	status   State
+	mutex    sync.Mutex
+	nodeList []*Node
+	detector chan interface{}
+}
+
+func Initialize(Capacity int) (*Pulser, error) {
 	//TODO
 	ch := make(chan interface{})
 	p := &Pulser{
-		ID:   "id",
-		name: "name",
+		ID:       "id",
+		name:     "name",
+		detector: ch,
 	}
 
-	return p, ch, nil
+	return p, nil
 }
 
 // API's to send heartbeat signals
