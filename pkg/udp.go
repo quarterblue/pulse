@@ -6,7 +6,7 @@ import (
 	"net"
 )
 
-func echoServerUDP(ctx context.Context, addr string) (net.Addr, error) {
+func EchoServerUDP(ctx context.Context, addr string) (net.Addr, error) {
 	s, err := net.ListenPacket("udp", addr)
 	if err != nil {
 		return nil, fmt.Errorf("Binding to UDP %s: %w", addr, err)
@@ -19,13 +19,14 @@ func echoServerUDP(ctx context.Context, addr string) (net.Addr, error) {
 		}()
 
 		buf := make([]byte, 1024)
+		ano := []byte("Greetings from Pulser Go.")
 		for {
-			n, clientAddr, err := s.ReadFrom(buf)
+			_, clientAddr, err := s.ReadFrom(buf)
 			if err != nil {
 				return
 			}
 
-			_, err = s.WriteTo(buf[:n], clientAddr)
+			_, err = s.WriteTo(ano[:], clientAddr)
 			if err != nil {
 				return
 			}
