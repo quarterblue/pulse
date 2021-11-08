@@ -1,10 +1,13 @@
-package pkg
+package udp
 
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 )
+
+var MAGIC_BYTES = []byte("pulse")
 
 func EchoServerUDP(ctx context.Context, addr string) (net.Addr, error) {
 	s, err := net.ListenPacket("udp", addr)
@@ -35,6 +38,7 @@ func EchoServerUDP(ctx context.Context, addr string) (net.Addr, error) {
 	return s.LocalAddr(), nil
 }
 
+// Create Pulse server
 // func PulseServer(ctx context.Context, addr string) (net.Addr, error) {
 // 	s, err := net.ListenPacket("udp", addr)
 // 	if err != nil {
@@ -53,8 +57,29 @@ func EchoServerUDP(ctx context.Context, addr string) (net.Addr, error) {
 // 			if err != nil {
 // 				return
 // 			}
-// 			_, err = s.WriteTo()
+// 			_, err = s.WriteTo(clientAddr)
 // 		}
 // 	}()
 // 	return s.LocalAddr(), nil
 // }
+
+// func ListenPulse(conn *net.UDPConn, quit chan struct{}) {
+// 	buf := make([]byte, 1024)
+// 	n, remoteAddr, err := 0, new(net.UDPAddr), error(nil)
+// 	for err == nil {
+// 		n, remoteAddr, err = conn.ReadFromUDP(buf)
+// 		fmt.Println("from", remoteAddr)
+// 	}
+// }
+
+func SendPulse(conn *net.UDPConn, ipAddr string, port string, quit chan struct{}) {
+	addr := ipAddr + ":" + port
+	dst, err := net.ResolveUDPAddr("udp", addr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = conn.WriteTo(MAGIC_BYTES, dst)
+	if err != nil {
+		log.Fatal(err)
+	}
+}

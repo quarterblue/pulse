@@ -7,8 +7,9 @@ import (
 	"log"
 	"net"
 	"os"
+	"reflect"
 
-	"github.com/quarterblue/pulse/pkg"
+	"github.com/quarterblue/pulse/pkg/udp"
 )
 
 func main() {
@@ -29,7 +30,14 @@ func main() {
 
 	fmt.Println("Welcome to Pulse!")
 	ctx, cancel := context.WithCancel(context.Background())
-	serverAddr, err := pkg.EchoServerUDP(ctx, "127.0.0.1:")
+	serverAddr, err := udp.EchoServerUDP(ctx, "127.0.0.1:")
+	fmt.Println(serverAddr)
+	fmt.Println(reflect.TypeOf(serverAddr))
+
+	dst, err := net.ResolveUDPAddr("udp", "127.0.0.1:9001")
+
+	fmt.Println("h")
+	fmt.Println(dst)
 
 	if err != nil {
 		log.Fatal(err)
