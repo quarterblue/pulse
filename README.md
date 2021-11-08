@@ -5,11 +5,11 @@
 
 ---
 
-### About
+## About
 
 Easy to use failure detection library based on gossip protocol
 
-### Features
+## Features
 
 - Easy to use
 - Minimalistic, simple architecture
@@ -20,13 +20,13 @@ Easy to use failure detection library based on gossip protocol
 - Easily customizable
 
 
-### Installation
+## Installation
 
 To install in Unix:
 
 ```shell
-cd projectdir/
-go get github.com/quarterblue/pulse
+$ cd projectdir/
+$ go get github.com/quarterblue/pulse
 ```
 
 Import into your Go project:
@@ -38,6 +38,45 @@ import (
 ```
 
 
-### Usage
+## Usage
 
-Failure detection library based on gossip protocol
+Pulser implementions the following interface:
+
+```go
+type Pulser interface {
+	StartPulse(port string) error
+	StopPulse()
+	AddPulser(node Node, maxRetry int) error
+	RemovePulser()
+	StopAllPulser()
+}
+```
+
+To initialize and add a Pulser
+
+```go
+package main
+
+import (
+        "log"
+        "github.com/quarterblue/pulse"
+)
+
+func main() {
+        capacitySize := 10
+        p, err := pulse.Initialize(capacitySize)
+        if err != nil {
+                log.Fatal(err)
+        }
+        
+        err = p.AddPulser(node, 3)
+        if err != nil {
+                log.Fatal(err)
+        }
+        
+}
+```
+
+## License
+
+Licensed under the MIT License.
