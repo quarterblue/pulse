@@ -21,7 +21,15 @@ type Node struct {
 	InitialConnect time.Time
 }
 
-type Pulser struct {
+type Pulser interface {
+	StartPulse(port string) error
+	StopPulse()
+	AddPulser(node Node, maxRetry int) error
+	RemovePulser()
+	StopAllPulser()
+}
+
+type Pulse struct {
 	ID       string
 	name     string
 	status   State
@@ -30,12 +38,13 @@ type Pulser struct {
 	detector chan interface{}
 }
 
-func Initialize(Capacity int) (*Pulser, error) {
+func Initialize(Capacity int) (*Pulse, error) {
 	//TODO
 	ch := make(chan interface{})
-	p := &Pulser{
+	p := &Pulse{
 		ID:       "id",
 		name:     "name",
+		status:   Alive,
 		detector: ch,
 	}
 
@@ -45,23 +54,24 @@ func Initialize(Capacity int) (*Pulser, error) {
 // API's to send heartbeat signals
 
 // Start responding to pulse messages
-func (p *Pulser) StartPulse(port string) error {
+func (p *Pulse) StartPulse(port string) error {
 	return nil
 }
 
-func (p *Pulser) StopPulse() {
+func (p *Pulse) StopPulse() {
 
 }
 
 // API's to detect failures
-func (p *Pulser) AddMonitor() {
+func (p *Pulse) AddPulser(node Node, maxRetry int) error {
+
+	return nil
+}
+
+func (p *Pulse) RemovePulser() {
 
 }
 
-func (p *Pulser) RemoveMonitor() {
-
-}
-
-func (p *Pulser) StopMonitoring() {
+func (p *Pulse) StopAllPulser() {
 
 }
