@@ -12,7 +12,7 @@ const (
 	Alive State = iota
 	Dead
 	Pending
-	Requesting
+	Suspect
 )
 
 type Identifier string
