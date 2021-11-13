@@ -1,4 +1,4 @@
-package cmd
+package pkg
 
 import (
 	"context"
@@ -7,11 +7,11 @@ import (
 	"log"
 	"os"
 	"sync"
-
-	"github.com/quarterblue/pulse/pkg/udp"
 )
 
-type Cli struct{}
+type Cli struct {
+	options string
+}
 
 func (c *Cli) Run() {
 	coord := flag.Bool("coord", false, "To start a coordinator")
@@ -29,14 +29,29 @@ func (c *Cli) Run() {
 
 	if *coord {
 		fmt.Println("Coordinator selected")
+		p, err := Initialize(10)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		var wg sync.WaitGroup
-		ipAddr := "127.0.0.1"
-		port := "9005"
-		port2 := "9006"
 		wg.Add(1)
-		udp.SendPulse(ctx, ipAddr, port, wg)
+		err = p.AddPulser("127.0.0.1", "9005", 3, 5, wg)
+		if err != nil {
+			fmt.Println(err)
+		}
 		wg.Add(1)
-		udp.SendPulse(ctx, ipAddr, port2, wg)
+		err = p.AddPulser("127.0.0.1", "9006", 3, 2, wg)
+		if err != nil {
+			fmt.Println(err)
+		}
+		// ipAddr := "127.0.0.1"
+		// port := "9005"
+		// port2 := "9006"
+		// wg.Add(1)
+		// SendPulse(ctx, ipAddr, port, wg)
+		// wg.Add(1)
+		// SendPulse(ctx, ipAddr, port2, wg)
 		wg.Wait()
 	} else {
 		fmt.Println("Pulser selected")
@@ -44,7 +59,7 @@ func (c *Cli) Run() {
 		wg.Add(1)
 		ipAddr := "127.0.0.1"
 		addr := ipAddr + ":" + *portListen
-		pulserAddr, err := udp.PulseServer(ctx, addr, wg)
+		pulserAddr, err := PulseServer(ctx, addr, wg)
 		fmt.Println("Listening on: ", pulserAddr)
 		if err != nil {
 			log.Fatal(err)

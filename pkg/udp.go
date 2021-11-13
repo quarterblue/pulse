@@ -1,4 +1,4 @@
-package udp
+package pkg
 
 import (
 	"context"
@@ -50,8 +50,10 @@ func PulseServer(ctx context.Context, addr string, wg sync.WaitGroup) (net.Addr,
 // 	}
 // }
 
-func SendPulse(ctx context.Context, ipAddr, port string, wg sync.WaitGroup) {
+func SendPulse(ctx context.Context, n *Node, wg sync.WaitGroup) {
 	go func(ipAddr, port string) {
+		var failedAttempts uint8 = 0
+		fmt.Println(failedAttempts)
 		addr := ipAddr + ":" + port
 		// dst, err := net.ResolveUDPAddr("udp", addr)
 		// if err != nil {
@@ -69,10 +71,13 @@ func SendPulse(ctx context.Context, ipAddr, port string, wg sync.WaitGroup) {
 				defer wg.Done()
 				return
 			default:
-				time.Sleep(2 * time.Second)
+				time.Sleep(time.Duration(n.Delay) * time.Second)
 				_, err := client.Write(ping)
 				if err != nil {
-					log.Fatal(err)
+					failedAttempts++
+					if failedAttempts >= n.MaxRetry {
+						log.Fatal(err)
+					}
 				}
 
 				buf := make([]byte, 1024)
@@ -84,7 +89,7 @@ func SendPulse(ctx context.Context, ipAddr, port string, wg sync.WaitGroup) {
 				fmt.Printf("Msg Received: %s\n", buf[:n])
 			}
 		}
-	}(ipAddr, port)
+	}(n.IpAddr, n.Port)
 }
 
 type Server struct {
