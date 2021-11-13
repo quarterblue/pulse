@@ -33,7 +33,7 @@ Import into your Go project:
 
 ```go
 import (
-  "github.com/quarterblue/pulse"
+  	"github.com/quarterblue/pulse"
 )
 ```
 
@@ -44,11 +44,35 @@ Pulser implementions the following interface:
 
 ```go
 type Pulser interface {
-	StartPulse(port string) error
-	StopPulse()
-	AddPulser(node Node, maxRetry int) error
-	RemovePulser()
+	// Starts responding to the pulse requests on IP Address: ipAddr and Port: port
+	StartPulseRes(ipAddr, port string) error
+
+	// Stops responding to pulse requests
+	StopPulseRes()
+}
+```
+
+Coordinator implementions the following interface:
+
+```go
+type Coordinator interface {
+	// Add an IP Address: ipAddr, Port: port to the monitor list and start asking for pulses
+	AddPulser(ipAddr, port string, maxRetry int) error
+
+	// Remove IP Address: ipAddr, Port: port from the monitor list and stop asking for pulses
+	RemovePulser(ipAddr, port string) error
+
+	// Collectively stop monitoring all pulsers
 	StopAllPulser()
+
+	// Collectively start all pulsers added to monitor list
+	StartAllPulser() error
+
+	// Get the current status of a specific Node identified by Identifier
+	Status(id Identifier)
+
+	// Get the current status of all Nodes
+	StatusAll()
 }
 ```
 
