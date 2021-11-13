@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"sync"
 	"time"
@@ -12,8 +13,8 @@ import (
 var MAGIC_BYTES = []byte("Pulse! (From Pulser!)")
 
 // Create Pulse server
-func PulseServer(ctx context.Context, addr string, wg sync.WaitGroup) (net.Addr, error) {
-	s, err := net.ListenPacket("udp", addr)
+func PulseServer(ctx context.Context, addr Identifier, wg sync.WaitGroup) (net.Addr, error) {
+	s, err := net.ListenPacket("udp", string(addr))
 	if err != nil {
 		return nil, fmt.Errorf("binding udp error %s, %w", addr, err)
 	}
@@ -24,6 +25,7 @@ func PulseServer(ctx context.Context, addr string, wg sync.WaitGroup) (net.Addr,
 			<-ctx.Done()
 			_ = s.Close()
 		}()
+		rand.Seed(time.Now().UnixNano())
 
 		buf := make([]byte, 1024)
 		for {
@@ -31,7 +33,10 @@ func PulseServer(ctx context.Context, addr string, wg sync.WaitGroup) (net.Addr,
 			if err != nil {
 				return
 			}
-			fmt.Printf("From Coord: %s", buf[:n])
+			log.Printf("From Coord: %s\n", buf[:n])
+			delay := rand.Intn(1000)
+			log.Printf("Simulating delay: %d milliseconds\n", delay)
+			time.Sleep(time.Duration(delay) * time.Millisecond)
 			_, err = s.WriteTo(MAGIC_BYTES, clientAddr)
 			if err != nil {
 				return
@@ -53,7 +58,7 @@ func PulseServer(ctx context.Context, addr string, wg sync.WaitGroup) (net.Addr,
 func SendPulse(ctx context.Context, n *Node, wg sync.WaitGroup) {
 	go func(ipAddr, port string) {
 		var failedAttempts uint8 = 0
-		fmt.Println(failedAttempts)
+		log.Printf("Failed Attempts: %d", failedAttempts)
 		addr := ipAddr + ":" + port
 		// dst, err := net.ResolveUDPAddr("udp", addr)
 		// if err != nil {
@@ -86,7 +91,7 @@ func SendPulse(ctx context.Context, n *Node, wg sync.WaitGroup) {
 					log.Fatal(err)
 				}
 
-				fmt.Printf("Msg Received: %s\n", buf[:n])
+				log.Printf("Msg Received: %s\n", buf[:n])
 			}
 		}
 	}(n.IpAddr, n.Port)

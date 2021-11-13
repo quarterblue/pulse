@@ -3,7 +3,6 @@ package pkg
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -21,14 +20,14 @@ func (c *Cli) Run() {
 	flag.Parse()
 
 	if !(*coord || *pulser) {
-		fmt.Println("You must select between a coordinator or a pulser.")
+		log.Println("You must select between a coordinator or a pulser.")
 		os.Exit(1)
 	}
-	fmt.Println("Welcome to Pulse!")
+	log.Println("Welcome to Pulse!")
 	ctx, cancel := context.WithCancel(context.Background())
 
 	if *coord {
-		fmt.Println("Coordinator selected")
+		log.Println("Coordinator selected")
 		p, err := Initialize(10)
 		if err != nil {
 			log.Fatal(err)
@@ -38,12 +37,12 @@ func (c *Cli) Run() {
 		wg.Add(1)
 		err = p.AddPulser("127.0.0.1", "9005", 3, 5, wg)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 		wg.Add(1)
 		err = p.AddPulser("127.0.0.1", "9006", 3, 2, wg)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 		// ipAddr := "127.0.0.1"
 		// port := "9005"
@@ -54,16 +53,18 @@ func (c *Cli) Run() {
 		// SendPulse(ctx, ipAddr, port2, wg)
 		wg.Wait()
 	} else {
-		fmt.Println("Pulser selected")
+		log.Println("Pulser selected")
 		var wg sync.WaitGroup
 		wg.Add(1)
-		ipAddr := "127.0.0.1"
-		addr := ipAddr + ":" + *portListen
-		pulserAddr, err := PulseServer(ctx, addr, wg)
-		fmt.Println("Listening on: ", pulserAddr)
+		p, err := Initialize(10)
 		if err != nil {
 			log.Fatal(err)
 		}
+		err = p.StartPulseRes(ctx, "127.0.0.1", *portListen)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		wg.Wait()
 	}
 	// dst, err := net.ResolveUDPAddr("udp", "127.0.0.1:9001")

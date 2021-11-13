@@ -3,6 +3,7 @@ package pkg
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"sync"
 	"time"
@@ -25,17 +26,19 @@ type Node struct {
 	Status         State
 	MaxRetry       uint8
 	Delay          uint8
-	LastConnected  time.Time
 	InitialConnect time.Time
+	LastConnected  time.Time
 }
 
 type Pulser interface {
-	// Starts responding the pulse message on IP Address: ipAddr and Port: port
+	// Starts responding to the pulse requests on IP Address: ipAddr and Port: port
 	StartPulseRes(ipAddr, port string) error
 
-	// Stops responding to pulse message
+	// Stops responding to pulse requests
 	StopPulseRes()
+}
 
+type Coordinator interface {
 	// Add an IP Address: ipAddr, Port: port to the monitor list and start asking for pulses
 	AddPulser(ipAddr, port string, maxRetry int) error
 
@@ -55,11 +58,17 @@ type Pulser interface {
 	StatusAll()
 }
 
+type FullNode interface {
+	Pulser
+	Coordinator
+}
+
 type Pulse struct {
 	ID       string
 	name     string
 	status   State
-	mutex    sync.Mutex
+	stop     chan interface{}
+	mutex    sync.RWMutex
 	nodeMap  map[Identifier]*Node
 	detector chan interface{}
 }
@@ -70,6 +79,8 @@ func Initialize(Capacity int) (*Pulse, error) {
 		ID:       "id",
 		name:     "name",
 		status:   Alive,
+		stop:     make(chan interface{}),
+		mutex:    sync.RWMutex{},
 		nodeMap:  make(map[Identifier]*Node),
 		detector: make(chan interface{}),
 	}
@@ -100,7 +111,17 @@ func IdentifierToAddr(iden Identifier) (ipAddr, port string) {
 }
 
 // Start responding to pulse messages
-func (p *Pulse) StartPulseRes(ipAddr, port string) error {
+func (p *Pulse) StartPulseRes(ctx context.Context, ipAddr, port string) error {
+	var wg sync.WaitGroup
+	wg.Add(1)
+	addr := AddrToIdentifier(ipAddr, port)
+	pulserAddr, err := PulseServer(ctx, addr, wg)
+	log.Println("Listening on: ", pulserAddr)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -135,5 +156,20 @@ func (p *Pulse) RemovePulser() {
 }
 
 func (p *Pulse) StopAllPulser() {
+
+}
+
+// Collectively start all pulsers added to monitor list
+func (p *Pulse) StartAllPulser() error {
+	return nil
+}
+
+// Get the current status of a specific Node identified by Identifier
+func (p *Pulse) Status(id Identifier) {
+
+}
+
+// Get the current status of all Nodes
+func (p *Pulse) StatusAll() {
 
 }
