@@ -12,7 +12,9 @@ import (
 	"time"
 )
 
-var MAGIC_BYTES = []byte("Pulse! (From Pulser!)")
+var MAGIC_BYTES = []byte("qbpulse")
+
+const initialRTT = 3
 
 type PulseResponse struct {
 	Id       uint8
@@ -68,6 +70,7 @@ func PulseServer(ctx context.Context, addr Identifier, wg sync.WaitGroup) (net.A
 			}
 		}
 	}()
+
 	return s.LocalAddr(), nil
 }
 
@@ -80,15 +83,19 @@ func PulseServer(ctx context.Context, addr Identifier, wg sync.WaitGroup) (net.A
 // 	}
 // }
 
-func SendPulse(ctx context.Context, n *Node, wg sync.WaitGroup) {
+func SendPulse(ctx context.Context, node *Node, wg sync.WaitGroup) {
 	go func(ipAddr, port string) {
 		var failedAttempts uint8 = 0
+		var avgRTT time.Duration = initialRTT
+
 		log.Printf("Failed Attempts: %d", failedAttempts)
 		addr := ipAddr + ":" + port
+
 		// dst, err := net.ResolveUDPAddr("udp", addr)
 		// if err != nil {
 		// 	log.Fatal(err)
 		// }
+
 		client, err := net.Dial("udp", addr)
 		if err != nil {
 			log.Fatal(err)
@@ -100,28 +107,48 @@ func SendPulse(ctx context.Context, n *Node, wg sync.WaitGroup) {
 			case <-ctx.Done():
 				defer wg.Done()
 				return
+
 			default:
-				time.Sleep(time.Duration(n.Delay) * time.Second)
+				time.Sleep(time.Duration(node.Delay) * time.Second)
 				_, err := client.Write(ping)
+				start := time.Now()
+
 				if err != nil {
-					failedAttempts++
-					if failedAttempts >= n.MaxRetry {
-						log.Fatal(err)
-					}
+					log.Println("We hit a slag, Write!")
 				}
 
 				buf := make([]byte, 1024)
 				n, err := client.Read(buf)
+
 				if err != nil {
-					log.Fatal(err)
+					log.Println("We hit a slag, Read!")
+					failedAttempts++
+					log.Printf("Failed Attempt: %d\n", failedAttempts)
+					if failedAttempts >= node.MaxRetry {
+						log.Fatal(err)
+					}
+					continue
 				}
+				elapsed := time.Since(start)
+
+				if avgRTT == initialRTT {
+					log.Println("Initial RTT")
+					avgRTT = elapsed
+				} else {
+					avgRTT = (avgRTT + elapsed) / 2
+				}
+
 				dec := gob.NewDecoder(bytes.NewReader(buf[:n]))
 				resp := PulseResponse{}
 				dec.Decode(&resp)
 				log.Printf("Msg Received: %+v\n", resp)
 			}
 		}
-	}(n.IpAddr, n.Port)
+	}(node.IpAddr, node.Port)
+}
+
+func RequestPulse(ctx context.Context) {
+	fmt.Println("Requesting")
 }
 
 type Server struct {

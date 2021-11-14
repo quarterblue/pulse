@@ -36,11 +36,13 @@ func (c *Cli) Run() {
 		var wg sync.WaitGroup
 		wg.Add(1)
 		err = p.AddPulser("127.0.0.1", "9005", 3, 5, wg)
+
 		if err != nil {
 			log.Println(err)
 		}
 		wg.Add(1)
 		err = p.AddPulser("127.0.0.1", "9006", 3, 2, wg)
+
 		if err != nil {
 			log.Println(err)
 		}
