@@ -1,7 +1,9 @@
 package pkg
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	"fmt"
 	"log"
 	"math/rand"
@@ -11,6 +13,13 @@ import (
 )
 
 var MAGIC_BYTES = []byte("Pulse! (From Pulser!)")
+
+type PulseResponse struct {
+	Id       uint8
+	Addr     string
+	Message  string
+	Optional interface{}
+}
 
 // Create Pulse server
 func PulseServer(ctx context.Context, addr Identifier, wg sync.WaitGroup) (net.Addr, error) {
@@ -27,17 +36,33 @@ func PulseServer(ctx context.Context, addr Identifier, wg sync.WaitGroup) (net.A
 		}()
 		rand.Seed(time.Now().UnixNano())
 
+		var idCount uint8 = 0
 		buf := make([]byte, 1024)
 		for {
 			n, clientAddr, err := s.ReadFrom(buf)
 			if err != nil {
 				return
 			}
+
+			var writeBuf bytes.Buffer
+			encoder := gob.NewEncoder(&writeBuf)
+			idCount++
+			resp := &PulseResponse{
+				Id:      idCount,
+				Addr:    s.LocalAddr().String(),
+				Message: "Hey there",
+			}
+
+			err = encoder.Encode(resp)
+			if err != nil {
+				log.Fatal(err)
+			}
+
 			log.Printf("From Coord: %s\n", buf[:n])
 			delay := rand.Intn(1000)
 			log.Printf("Simulating delay: %d milliseconds\n", delay)
 			time.Sleep(time.Duration(delay) * time.Millisecond)
-			_, err = s.WriteTo(MAGIC_BYTES, clientAddr)
+			_, err = s.WriteTo(writeBuf.Bytes(), clientAddr)
 			if err != nil {
 				return
 			}
@@ -90,8 +115,10 @@ func SendPulse(ctx context.Context, n *Node, wg sync.WaitGroup) {
 				if err != nil {
 					log.Fatal(err)
 				}
-
-				log.Printf("Msg Received: %s\n", buf[:n])
+				dec := gob.NewDecoder(bytes.NewReader(buf[:n]))
+				resp := PulseResponse{}
+				dec.Decode(&resp)
+				log.Printf("Msg Received: %+v\n", resp)
 			}
 		}
 	}(n.IpAddr, n.Port)
