@@ -28,7 +28,7 @@ func (c *Cli) Run() {
 
 	if *coord {
 		log.Println("Coordinator selected")
-		p, err := Initialize(10)
+		p, _, err := Initialize(10)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -58,7 +58,7 @@ func (c *Cli) Run() {
 		log.Println("Pulser selected")
 		var wg sync.WaitGroup
 		wg.Add(1)
-		p, err := Initialize(10)
+		p, _, err := Initialize(10)
 		if err != nil {
 			log.Fatal(err)
 		}

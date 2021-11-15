@@ -20,18 +20,7 @@ const (
 
 type Identifier string
 
-type Node struct {
-	IpAddr         string
-	Port           string
-	Status         State
-	MaxRetry       uint8
-	Delay          uint8
-	RTT            float32
-	InitialConnect time.Time
-	LastConnected  time.Time
-	mu             sync.RWMutex
-}
-
+// Pulser is a node that responds to pulse requests
 type Pulser interface {
 	// Starts responding to the pulse requests on IP Address: ipAddr and Port: port
 	StartPulseRes(ipAddr, port string) error
@@ -40,6 +29,7 @@ type Pulser interface {
 	StopPulseRes()
 }
 
+// Coordinator is a node that requests pulse response from a map of nodes
 type Coordinator interface {
 	// Add an IP Address: ipAddr, Port: port to the monitor list and start asking for pulses
 	AddPulser(ipAddr, port string, maxRetry int) error
@@ -60,20 +50,32 @@ type Coordinator interface {
 	StatusAll() ([]*Status, error)
 }
 
+// Pulser and Coordinator functions are indepedent, but can also be used together as a Full node
 type FullNode interface {
 	Pulser
 	Coordinator
 }
+type Node struct {
+	IpAddr         string
+	Port           string
+	Status         State
+	MaxRetry       uint8
+	Delay          uint8
+	RTT            float32
+	InitialConnect time.Time
+	LastConnected  time.Time
+	mu             sync.RWMutex
+}
 
 type Pulse struct {
-	ID           string
+	Id           string
 	name         string
 	status       State
 	stop         chan interface{}
 	mutex        sync.RWMutex
 	nodeMap      map[Identifier]*Node
 	deadNode     map[Identifier]*Node
-	notifyStream chan interface{}
+	notifyStream chan FailureMessage
 }
 
 type Status struct {
@@ -83,20 +85,28 @@ type Status struct {
 	LastConnected time.Time
 }
 
-func Initialize(Capacity int) (*Pulse, error) {
-	//TODO
+func AddrToIdentifier(ipAddr, port string) Identifier {
+	return Identifier(ipAddr + ":" + port)
+}
+
+func IdentifierToAddr(iden Identifier) (ipAddr, port string) {
+	s := strings.SplitN(string(iden), ":", 2)
+	return s[0], s[1]
+}
+
+func Initialize(capacity int) (*Pulse, chan FailureMessage, error) {
 	p := &Pulse{
-		ID:           "id",
+		Id:           "id",
 		name:         "name",
 		status:       Alive,
 		stop:         make(chan interface{}),
 		mutex:        sync.RWMutex{},
 		nodeMap:      make(map[Identifier]*Node),
 		deadNode:     make(map[Identifier]*Node),
-		notifyStream: make(chan interface{}),
+		notifyStream: make(chan FailureMessage, capacity),
 	}
 
-	return p, nil
+	return p, p.notifyStream, nil
 }
 
 // API's to send heartbeat signals
@@ -112,15 +122,6 @@ func CreateNode(ipAddr, port string, maxRetry, delay uint8) *Node {
 		mu:       sync.RWMutex{},
 	}
 	return n
-}
-
-func AddrToIdentifier(ipAddr, port string) Identifier {
-	return Identifier(ipAddr + ":" + port)
-}
-
-func IdentifierToAddr(iden Identifier) (ipAddr, port string) {
-	s := strings.SplitN(string(iden), ":", 2)
-	return s[0], s[1]
 }
 
 // Start responding to pulse messages

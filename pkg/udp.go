@@ -12,10 +12,12 @@ import (
 	"time"
 )
 
-var MAGIC_BYTES = []byte("qbpulse")
+var (
+	MAGIC_BYTES               = []byte("qbpulse")
+	initialRTT  time.Duration = 3 * time.Second
+)
 
-const initialRTT = 3
-
+// Response struct to send upon receiving a pulse request
 type PulseResponse struct {
 	Id       uint8
 	Addr     string
@@ -23,7 +25,18 @@ type PulseResponse struct {
 	Optional interface{}
 }
 
-// Create Pulse server
+// Message struct to send to notify channel when a node is determined to have failed
+type FailureMessage struct {
+	Id             Identifier
+	State          State
+	RTT            float32
+	RetryAttempts  uint8
+	GossipPulse    []Identifier
+	InitialConnect time.Time
+	LastConnected  time.Time
+}
+
+// Create Pulse server that listens on addr Identifier and responds to pulse messages
 func PulseServer(ctx context.Context, addr Identifier, wg sync.WaitGroup) (net.Addr, error) {
 	s, err := net.ListenPacket("udp", string(addr))
 	if err != nil {
@@ -52,7 +65,7 @@ func PulseServer(ctx context.Context, addr Identifier, wg sync.WaitGroup) (net.A
 			resp := &PulseResponse{
 				Id:      idCount,
 				Addr:    s.LocalAddr().String(),
-				Message: "Hey there",
+				Message: "I am alive!",
 			}
 
 			err = encoder.Encode(resp)
@@ -150,7 +163,7 @@ func SendPulse(ctx context.Context, node *Node, wg sync.WaitGroup) {
 	}(node.IpAddr, node.Port)
 }
 
-func RequestPulse(ctx context.Context) {
+func RequestPulse(ctx context.Context, node *Node, resp chan interface{}) {
 	fmt.Println("Requesting")
 }
 
