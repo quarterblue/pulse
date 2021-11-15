@@ -59,6 +59,7 @@ type Node struct {
 	IpAddr         string
 	Port           string
 	Status         State
+	Tracking       bool
 	MaxRetry       uint8
 	Delay          uint8
 	RTT            float32
@@ -116,11 +117,13 @@ func CreateNode(ipAddr, port string, maxRetry, delay uint8) *Node {
 		IpAddr:   ipAddr,
 		Port:     port,
 		Status:   Pending,
+		Tracking: true,
 		MaxRetry: maxRetry,
 		Delay:    delay,
 		RTT:      3,
 		mu:       sync.RWMutex{},
 	}
+
 	return n
 }
 
@@ -162,12 +165,13 @@ func (p *Pulse) AddPulser(ipAddr, port string, maxRetry, delay uint8, wg sync.Wa
 
 	ctx := context.Background()
 	ctx, _ = context.WithCancel(ctx)
-	SendPulse(ctx, p.nodeMap[iden], wg)
+	SendPulse(ctx, p.nodeMap[iden], p.notifyStream, wg)
 	return nil
 }
 
-func (p *Pulse) RemovePulser() {
-
+// Remove the pulser to the map of nodes to monitor and immediately stop sending pulses
+func (p *Pulse) RemovePulser(ipAddr, port string) error {
+	return nil
 }
 
 func (p *Pulse) StopAllPulser() {

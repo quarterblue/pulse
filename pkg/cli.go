@@ -16,6 +16,7 @@ func (c *Cli) Run() {
 	coord := flag.Bool("coord", false, "To start a coordinator")
 	pulser := flag.Bool("pulser", false, "To start a pulser")
 	portListen := flag.String("port", "9001", "Port to listen on")
+	restApi := flag.Bool("api", false, "Start REST Api")
 
 	flag.Parse()
 
@@ -28,31 +29,30 @@ func (c *Cli) Run() {
 
 	if *coord {
 		log.Println("Coordinator selected")
-		p, _, err := Initialize(10)
+		p, nStream, err := Initialize(10)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		var wg sync.WaitGroup
-		wg.Add(1)
-		err = p.AddPulser("127.0.0.1", "9005", 3, 5, wg)
+		nodeList := []string{"9005", "9006", "9007"}
 
-		if err != nil {
-			log.Println(err)
+		for _, node := range nodeList {
+			wg.Add(1)
+			err = p.AddPulser("127.0.0.1", node, 3, 2, wg)
+			if err != nil {
+				log.Println(err)
+			}
 		}
-		wg.Add(1)
-		err = p.AddPulser("127.0.0.1", "9006", 3, 2, wg)
 
-		if err != nil {
-			log.Println(err)
+		go func(stream chan FailureMessage) {
+			log.Println(<-stream)
+		}(nStream)
+
+		if *restApi {
+			go HttpAPI(p, 7001, "Development")
 		}
-		// ipAddr := "127.0.0.1"
-		// port := "9005"
-		// port2 := "9006"
-		// wg.Add(1)
-		// SendPulse(ctx, ipAddr, port, wg)
-		// wg.Add(1)
-		// SendPulse(ctx, ipAddr, port2, wg)
+
 		wg.Wait()
 	} else {
 		log.Println("Pulser selected")

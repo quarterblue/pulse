@@ -29,7 +29,6 @@ type PulseResponse struct {
 type FailureMessage struct {
 	Id             Identifier
 	State          State
-	RTT            float32
 	RetryAttempts  uint8
 	GossipPulse    []Identifier
 	InitialConnect time.Time
@@ -96,7 +95,7 @@ func PulseServer(ctx context.Context, addr Identifier, wg sync.WaitGroup) (net.A
 // 	}
 // }
 
-func SendPulse(ctx context.Context, node *Node, wg sync.WaitGroup) {
+func SendPulse(ctx context.Context, node *Node, nStream chan FailureMessage, wg sync.WaitGroup) {
 	go func(ipAddr, port string) {
 		var failedAttempts uint8 = 0
 		var avgRTT time.Duration = initialRTT
@@ -105,9 +104,6 @@ func SendPulse(ctx context.Context, node *Node, wg sync.WaitGroup) {
 		addr := ipAddr + ":" + port
 
 		// dst, err := net.ResolveUDPAddr("udp", addr)
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
 
 		client, err := net.Dial("udp", addr)
 		if err != nil {
@@ -133,25 +129,46 @@ func SendPulse(ctx context.Context, node *Node, wg sync.WaitGroup) {
 				buf := make([]byte, 1024)
 				n, err := client.Read(buf)
 
+				// Pulse response failed, retry request for pulse
+				// and immediately activate gossip protcol to ask other nodes for pulse status of the node in question
 				if err != nil {
 					failedAttempts++
 					log.Printf("Failed Attempt: %d\n", failedAttempts)
-					node.mu.RLock()
+					node.mu.Lock()
+					node.Status = Suspect
 					if failedAttempts >= node.MaxRetry {
+						defer node.mu.Unlock()
 						log.Printf("Failure detected, removing: %s:%s\n", node.IpAddr, node.Port)
-						node.mu.RUnlock()
+
+						fMsg := FailureMessage{
+							Id:             AddrToIdentifier(node.IpAddr, node.Port),
+							State:          Dead,
+							RetryAttempts:  failedAttempts,
+							GossipPulse:    []Identifier{},
+							InitialConnect: node.InitialConnect,
+							LastConnected:  node.LastConnected,
+						}
+
+						nStream <- fMsg
 						return
 					}
-					node.mu.RUnlock()
+					node.mu.Unlock()
 					continue
 				}
+				recvTime := time.Now()
 				elapsed := time.Since(start)
 
 				if avgRTT == initialRTT {
 					log.Println("Initial RTT")
+					node.mu.Lock()
+					node.Status = Alive
+					node.mu.Unlock()
 					avgRTT = elapsed
 				} else {
 					avgRTT = (avgRTT + elapsed) / 2
+					node.mu.Lock()
+					node.LastConnected = recvTime
+					node.mu.Unlock()
 				}
 
 				dec := gob.NewDecoder(bytes.NewReader(buf[:n]))
