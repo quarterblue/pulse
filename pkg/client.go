@@ -26,8 +26,10 @@ type Node struct {
 	Status         State
 	MaxRetry       uint8
 	Delay          uint8
+	RTT            float32
 	InitialConnect time.Time
 	LastConnected  time.Time
+	mu             sync.RWMutex
 }
 
 type Pulser interface {
@@ -52,10 +54,10 @@ type Coordinator interface {
 	StartAllPulser() error
 
 	// Get the current status of a specific Node identified by Identifier
-	Status(id Identifier)
+	Status(id Identifier) (Status, error)
 
 	// Get the current status of all Nodes
-	StatusAll()
+	StatusAll() ([]*Status, error)
 }
 
 type FullNode interface {
@@ -64,25 +66,34 @@ type FullNode interface {
 }
 
 type Pulse struct {
-	ID       string
-	name     string
-	status   State
-	stop     chan interface{}
-	mutex    sync.RWMutex
-	nodeMap  map[Identifier]*Node
-	detector chan interface{}
+	ID           string
+	name         string
+	status       State
+	stop         chan interface{}
+	mutex        sync.RWMutex
+	nodeMap      map[Identifier]*Node
+	deadNode     map[Identifier]*Node
+	notifyStream chan interface{}
+}
+
+type Status struct {
+	Id            Identifier
+	State         State
+	RTT           float32
+	LastConnected time.Time
 }
 
 func Initialize(Capacity int) (*Pulse, error) {
 	//TODO
 	p := &Pulse{
-		ID:       "id",
-		name:     "name",
-		status:   Alive,
-		stop:     make(chan interface{}),
-		mutex:    sync.RWMutex{},
-		nodeMap:  make(map[Identifier]*Node),
-		detector: make(chan interface{}),
+		ID:           "id",
+		name:         "name",
+		status:       Alive,
+		stop:         make(chan interface{}),
+		mutex:        sync.RWMutex{},
+		nodeMap:      make(map[Identifier]*Node),
+		deadNode:     make(map[Identifier]*Node),
+		notifyStream: make(chan interface{}),
 	}
 
 	return p, nil
@@ -97,6 +108,8 @@ func CreateNode(ipAddr, port string, maxRetry, delay uint8) *Node {
 		Status:   Pending,
 		MaxRetry: maxRetry,
 		Delay:    delay,
+		RTT:      3,
+		mu:       sync.RWMutex{},
 	}
 	return n
 }
@@ -136,10 +149,11 @@ func (p *Pulse) StopPulseRes() {
 // delay: the number of seconds to delay between each message
 func (p *Pulse) AddPulser(ipAddr, port string, maxRetry, delay uint8, wg sync.WaitGroup) error {
 	iden := AddrToIdentifier(ipAddr, port)
-
+	p.mutex.RLock()
 	if _, ok := p.nodeMap[iden]; ok {
 		return fmt.Errorf("IP Addr and Port combination already exists")
 	}
+	p.mutex.RUnlock()
 	newNode := CreateNode(ipAddr, port, maxRetry, delay)
 	p.mutex.Lock()
 	p.nodeMap[iden] = newNode
@@ -165,11 +179,24 @@ func (p *Pulse) StartAllPulser() error {
 }
 
 // Get the current status of a specific Node identified by Identifier
-func (p *Pulse) Status(id Identifier) {
+func (p *Pulse) Status(id Identifier) (*Status, error) {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
 
+	if node, ok := p.nodeMap[id]; !ok {
+		return nil, fmt.Errorf("IP Addr and Port combination does not exists")
+	} else {
+		s := &Status{
+			Id:            id,
+			State:         node.Status,
+			RTT:           node.RTT,
+			LastConnected: node.LastConnected,
+		}
+		return s, nil
+	}
 }
 
 // Get the current status of all Nodes
-func (p *Pulse) StatusAll() {
-
+func (p *Pulse) StatusAll() ([]*Status, error) {
+	return nil, nil
 }

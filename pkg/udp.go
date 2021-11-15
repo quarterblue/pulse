@@ -114,19 +114,22 @@ func SendPulse(ctx context.Context, node *Node, wg sync.WaitGroup) {
 				start := time.Now()
 
 				if err != nil {
-					log.Println("We hit a slag, Write!")
+					log.Println("Write failed")
 				}
 
 				buf := make([]byte, 1024)
 				n, err := client.Read(buf)
 
 				if err != nil {
-					log.Println("We hit a slag, Read!")
 					failedAttempts++
 					log.Printf("Failed Attempt: %d\n", failedAttempts)
+					node.mu.RLock()
 					if failedAttempts >= node.MaxRetry {
-						log.Fatal(err)
+						log.Printf("Failure detected, removing: %s:%s\n", node.IpAddr, node.Port)
+						node.mu.RUnlock()
+						return
 					}
+					node.mu.RUnlock()
 					continue
 				}
 				elapsed := time.Since(start)
