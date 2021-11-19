@@ -101,6 +101,12 @@ func main() {
 }
 ```
 
+## References
+
+- <a href="https://www.cs.cornell.edu/projects/Quicksilver/public_pdfs/SWIM.pdf">SWIM: Scalable Weakly-consistent Infection-style Process Group Membership Protocol</a>
+- <a href="https://www.cs.yale.edu/homes/aspnes/pinewiki/FailureDetectors.html">Failure Detectors</a>
+
+
 ## License
 
 Licensed under the MIT License.
