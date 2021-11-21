@@ -1,9 +1,15 @@
 
 <p align="left">
-        <img width="20%" src="https://raw.githubusercontent.com/quarterblue/pulse/main/static/pulselogo.png?token=ANKI23LN4KTYDEHVJKQIFVDBSF7L4" alt="Parsec logo">
+        <img width="20%" src="https://raw.githubusercontent.com/quarterblue/pulse/main/static/pulselogo.png?token=ANKI23IIVVHEVMOXEEE4OYTBUP3DY" alt="Parsec logo">
 </p>
 
 ---
+<a href="https://github.com/quarterblue/pulse/actions/workflows/go.yml" target="_blank">
+  <img src="https://github.com/quarterblue/pulse/actions/workflows/go.yml/badge.svg" alt="GitHub Passing">
+</a>
+<a href="https://github.com/quarterblue/pulse/blob/main/LICENSE" target="_blank">
+  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
+</a>
 
 ## About
 
