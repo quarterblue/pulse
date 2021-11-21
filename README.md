@@ -28,6 +28,7 @@ Pulse uses a simple heartbeat protocol when the number of nodes involved are sma
 - Dynamic RTT calculation
 - Eventually perfect weakly consistent FD
 - Easily customizable
+- REST API for status updates
 
 
 ## Installation
