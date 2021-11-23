@@ -54,6 +54,7 @@ import (
 Pulser implementions the following interface:
 
 ```go
+// Pulser is a node that responds to pulse requests
 type Pulser interface {
 	// Starts responding to the pulse requests on IP Address: ipAddr and Port: port
 	StartPulseRes(ipAddr, port string) error
@@ -66,9 +67,10 @@ type Pulser interface {
 Coordinator implementions the following interface:
 
 ```go
+// Coordinator is a node that requests pulse response from a map of nodes
 type Coordinator interface {
 	// Add an IP Address: ipAddr, Port: port to the monitor list and start asking for pulses
-	AddPulser(ipAddr, port string, maxRetry int) error
+	AddPulser(ipAddr, port string, maxRetry, delay int, wg sync.WaitGroup) error
 
 	// Remove IP Address: ipAddr, Port: port from the monitor list and stop asking for pulses
 	RemovePulser(ipAddr, port string) error
@@ -80,10 +82,22 @@ type Coordinator interface {
 	StartAllPulser() error
 
 	// Get the current status of a specific Node identified by Identifier
-	Status(id Identifier)
+	Status(id Identifier) (Status, error)
 
 	// Get the current status of all Nodes
-	StatusAll()
+	StatusAll() ([]*Status, error)
+}
+```
+
+Full node implementions the Pulser and Coordinator along with Gossip() and StopGossip():
+
+```go
+// Pulser and Coordinator functions are indepedent, but can also be used together as a Full node
+type FullNode interface {
+	Pulser
+	Coordinator
+	Gossip()
+	StopGossip()
 }
 ```
 
@@ -94,21 +108,44 @@ package main
 
 import (
         "log"
+	"sync"
         "github.com/quarterblue/pulse"
 )
 
 func main() {
+	// capacitySize indicates the buffer count for channel that delivers the notification for failed nodes
         capacitySize := 10
-        p, err := pulse.Initialize(capacitySize)
+	
+	// Initialize returns the Pulser node, NotificationStream (channel) and err
+        p, nStream, err := Initialize(capacitySize)
         if err != nil {
                 log.Fatal(err)
         }
+	
+	var wg sync.WaitGroup
+	wg.Add(1)
+	
+	ipAddr := "82.165.205.136"
+	port := "3005"
+	maxRetry := 3
+	delay := 2
+	
+	err = p.AddPulser(ipAddr, port, maxRetry, delay, wg)
         
-        err = p.AddPulser(node, 3)
         if err != nil {
                 log.Fatal(err)
         }
-        
+	
+	// Channel to receive failure messages
+	go func(stream chan FailureMessage) {
+		// Do logic for failure n
+		log.Println(<-stream)
+	}(nStream)
+	
+	// Start a REST API server
+	go HttpAPI(p, 7001, "Development")
+	
+	wg.Wait()
 }
 ```
 
