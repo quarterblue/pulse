@@ -1,4 +1,4 @@
-package pkg
+package pulse
 
 import (
 	"context"
@@ -12,9 +12,13 @@ import (
 type State int
 
 const (
+	// Received a pulse directly or indirectly within a time bound
 	Alive State = iota
+	// Received no pulse directly within a time bound or received gossip message declaring dead
 	Dead
+	// State assumed when a node is first discovered and contacted
 	Pending
+	// Suspect state, awaiting time bound to officially announce as dead
 	Suspect
 )
 
@@ -54,7 +58,9 @@ type Coordinator interface {
 type FullNode interface {
 	Pulser
 	Coordinator
+	Gossip()
 }
+
 type Node struct {
 	IpAddr         string
 	Port           string
@@ -68,6 +74,9 @@ type Node struct {
 	mu             sync.RWMutex
 }
 
+// Pulse implements the FullNode interface,
+// It can act as a Coordinator or Pulser indenpendently,
+// Or it can act as a Full Node with gossip protocol
 type Pulse struct {
 	Id           string
 	name         string
@@ -77,6 +86,7 @@ type Pulse struct {
 	nodeMap      map[Identifier]*Node
 	deadNode     map[Identifier]*Node
 	notifyStream chan FailureMessage
+	cancelRes    context.CancelFunc
 }
 
 type Status struct {
@@ -96,6 +106,7 @@ func IdentifierToAddr(iden Identifier) (ipAddr, port string) {
 }
 
 func Initialize(capacity int) (*Pulse, chan FailureMessage, error) {
+
 	p := &Pulse{
 		Id:           "id",
 		name:         "name",
@@ -128,7 +139,8 @@ func CreateNode(ipAddr, port string, maxRetry, delay uint8) *Node {
 }
 
 // Start responding to pulse messages
-func (p *Pulse) StartPulseRes(ctx context.Context, ipAddr, port string) error {
+func (p *Pulse) StartPulseRes(ctx context.Context, cancel context.CancelFunc, ipAddr, port string) error {
+
 	var wg sync.WaitGroup
 	wg.Add(1)
 	addr := AddrToIdentifier(ipAddr, port)
@@ -139,11 +151,17 @@ func (p *Pulse) StartPulseRes(ctx context.Context, ipAddr, port string) error {
 		return err
 	}
 
+	p.mutex.Lock()
+	p.cancelRes = cancel
+	p.mutex.Unlock()
+
 	return nil
 }
 
 func (p *Pulse) StopPulseRes() {
-
+	p.mutex.Lock()
+	p.cancelRes()
+	p.mutex.Unlock()
 }
 
 // API's to detect failures
@@ -203,5 +221,25 @@ func (p *Pulse) Status(id Identifier) (*Status, error) {
 
 // Get the current status of all Nodes
 func (p *Pulse) StatusAll() ([]*Status, error) {
-	return nil, nil
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+
+	allStatus := make([]*Status, len(p.nodeMap))
+
+	var index int = 0
+
+	for k, v := range p.nodeMap {
+		allStatus[index] = &Status{
+			Id:            k,
+			State:         v.Status,
+			RTT:           v.RTT,
+			LastConnected: v.LastConnected,
+		}
+		index++
+	}
+	return allStatus, nil
+}
+
+func (p *Pulse) Gossip() {
+	fmt.Println("Start Gossip Protocol")
 }

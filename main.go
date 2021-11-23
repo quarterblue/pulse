@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/quarterblue/pulse/pkg"
+	"github.com/quarterblue/pulse/pkg/pulse"
 )
 
 func main() {
-	cli := &pkg.Cli{}
+	cli := &pulse.Cli{}
 	cli.Run()
 }

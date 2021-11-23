@@ -1,4 +1,4 @@
-package pkg
+package pulse
 
 import (
 	"fmt"
@@ -35,6 +35,7 @@ func HttpAPI(p *Pulse, port int, env string) {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/status/all", app.statusHandler)
+	mux.HandleFunc("/status/:id", app.statusSingleHandler)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.port),
@@ -51,6 +52,12 @@ func HttpAPI(p *Pulse, port int, env string) {
 }
 
 func (app *application) statusHandler(w http.ResponseWriter, r *http.Request) {
+	app.pulse.mutex.RLock()
+	defer app.pulse.mutex.RUnlock()
+	fmt.Fprintln(w, app.pulse.nodeMap)
+}
+
+func (app *application) statusSingleHandler(w http.ResponseWriter, r *http.Request) {
 	app.pulse.mutex.RLock()
 	defer app.pulse.mutex.RUnlock()
 	fmt.Fprintln(w, app.pulse.nodeMap)

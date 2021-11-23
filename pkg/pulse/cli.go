@@ -1,4 +1,4 @@
-package pkg
+package pulse
 
 import (
 	"context"
@@ -62,7 +62,7 @@ func (c *Cli) Run() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = p.StartPulseRes(ctx, "127.0.0.1", *portListen)
+		err = p.StartPulseRes(ctx, cancel, "127.0.0.1", *portListen)
 		if err != nil {
 			log.Fatal(err)
 		}
