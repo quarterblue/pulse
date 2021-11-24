@@ -34,5 +34,17 @@ func TestAddrToIdentifier(t *testing.T) {
 }
 
 func TestIdentifierToAddr(t *testing.T) {
+	var iden Identifier = "172.17.49.2:9001"
+	ipAddr := "172.17.49.2"
+	port := "9001"
+
+	tipAddr, tport := IdentifierToAddr(iden)
+	if tipAddr != ipAddr {
+		t.Fatalf("expected ipAddr to be %s, but got %s", ipAddr, tipAddr)
+	}
+
+	if tport != port {
+		t.Fatalf("expected port to be %s, but got %s", port, tport)
+	}
 
 }

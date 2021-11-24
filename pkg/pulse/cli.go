@@ -21,9 +21,10 @@ func (c *Cli) Run() {
 	flag.Parse()
 
 	if !(*coord || *pulser) {
-		log.Println("You must select between a coordinator or a pulser.")
+		log.Println("You must select either a coordinator or a pulser.")
 		os.Exit(1)
 	}
+
 	log.Println("Welcome to Pulse!")
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -54,6 +55,7 @@ func (c *Cli) Run() {
 		}
 
 		wg.Wait()
+
 	} else {
 		log.Println("Pulser selected")
 		var wg sync.WaitGroup
@@ -69,7 +71,6 @@ func (c *Cli) Run() {
 
 		wg.Wait()
 	}
-	// dst, err := net.ResolveUDPAddr("udp", "127.0.0.1:9001")
 
 	defer cancel()
 }

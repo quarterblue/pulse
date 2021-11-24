@@ -8,17 +8,20 @@ import (
 	"time"
 )
 
+// Configuration for HTTP server
 type config struct {
 	port int
 	env  string
 }
 
+// Application has the Pulse node embedded to query information
 type application struct {
 	config config
 	logger *log.Logger
 	pulse  *Pulse
 }
 
+// REST API provides status update on the nodes being tracked
 func HttpAPI(p *Pulse, port int, env string) {
 	cfg := config{
 		port: port,

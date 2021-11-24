@@ -22,6 +22,7 @@ const (
 	Suspect
 )
 
+// Identifier is ipv4:port format (eg. 212.189.35.68:3005)
 type Identifier string
 
 // Pulser is a node that responds to pulse requests
@@ -121,7 +122,7 @@ func Initialize(capacity int) (*Pulse, chan FailureMessage, error) {
 	return p, p.notifyStream, nil
 }
 
-// API's to send heartbeat signals
+// Create a node to track
 func CreateNode(ipAddr, port string, maxRetry, delay uint8) *Node {
 
 	n := &Node{
@@ -189,15 +190,17 @@ func (p *Pulse) AddPulser(ipAddr, port string, maxRetry, delay uint8, wg sync.Wa
 
 // Remove the pulser to the map of nodes to monitor and immediately stop sending pulses
 func (p *Pulse) RemovePulser(ipAddr, port string) error {
+	// TODO
 	return nil
 }
 
 func (p *Pulse) StopAllPulser() {
-
+	// TODO
 }
 
 // Collectively start all pulsers added to monitor list
 func (p *Pulse) StartAllPulser() error {
+	// TODO
 	return nil
 }
 

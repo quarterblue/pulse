@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	MAGIC_BYTES               = []byte("qbpulse")
-	initialRTT  time.Duration = 3 * time.Second
+	MAGIC_BYTES               = []byte("qbpulse") // Magic bytes allow clients to verify they are speaking the same protocol
+	initialRTT  time.Duration = 3 * time.Second   // Intial RTT is generous at the start, but will soon be dynamically calculated
 )
 
 // Response struct to send upon receiving a pulse request
@@ -35,7 +35,8 @@ type FailureMessage struct {
 	LastConnected  time.Time
 }
 
-// Create Pulse server that listens on addr Identifier and responds to pulse messages
+// Create a Pulse server that listens on addr Identifier and responds to pulse messages
+// Spins up two go routines, one for listening for UDP messages, and the other to wait on ctx.Done
 func PulseServer(ctx context.Context, addr Identifier, wg sync.WaitGroup) (net.Addr, error) {
 	s, err := net.ListenPacket("udp", string(addr))
 	if err != nil {
@@ -86,15 +87,9 @@ func PulseServer(ctx context.Context, addr Identifier, wg sync.WaitGroup) (net.A
 	return s.LocalAddr(), nil
 }
 
-// func ListenPulse(conn *net.UDPConn, quit chan struct{}) {
-// 	buf := make([]byte, 1024)
-// 	n, remoteAddr, err := 0, new(net.UDPAddr), error(nil)
-// 	for err == nil {
-// 		n, remoteAddr, err = conn.ReadFromUDP(buf)
-// 		fmt.Println("from", remoteAddr)
-// 	}
-// }
-
+// Request a pulse signal to a node, if failure is suspected, choose 3 random nodes to inquire about liveliness
+// Retry maxRetry times while waiting for average RTT between each messages.
+// If both these methods fail to produce pulse from the suspect, mark the node as dead and send a Failure message to nStream channel.
 func SendPulse(ctx context.Context, node *Node, nStream chan FailureMessage, wg sync.WaitGroup) {
 	go func(ipAddr, port string) {
 		var failedAttempts uint8 = 0
@@ -184,7 +179,6 @@ func RequestPulse(ctx context.Context, node *Node, resp chan interface{}) {
 	fmt.Println("Requesting")
 }
 
-type Server struct {
-	Payload []byte
-	Retires uint8
+func PickThree() []*Node {
+	return nil
 }
