@@ -19,6 +19,8 @@ The problem with heartbeat-based FD is that it is not scalable. Every node in th
 
 Pulse uses a simple heartbeat protocol when the number of nodes involved are small (<= 100). As the number of nodes grows (customizable by the user), the nodes start disseminating gossip style messages to relay their liveliness. An individual node can opt to keep a heartbeat protocol to receive RTT bounded updates for nodes of their choosing, but the rest of the node discovery will be done via gossip message exchange.
 
+🚧 The project is still in <b>early development</b>, expect bugs, safety issues, and components that don't work
+
 ## Features
 
 - Easy to use
