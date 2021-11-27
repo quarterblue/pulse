@@ -7,6 +7,9 @@
 <a href="https://github.com/quarterblue/pulse/actions/workflows/go.yml" target="_blank">
   <img src="https://github.com/quarterblue/pulse/actions/workflows/go.yml/badge.svg" alt="GitHub Passing">
 </a>
+<a href="https://goreportcard.com/report/github.com/quarterblue/pulse" target="_blank">
+  <img src="https://img.shields.io/badge/go%20report-A+-brightgreen.svg?style=flat" alt="Go Report Card">
+</a>
 <a href="https://github.com/quarterblue/pulse/blob/main/LICENSE" target="_blank">
   <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
 </a>
