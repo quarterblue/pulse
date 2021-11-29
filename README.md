@@ -1,6 +1,6 @@
 
 <p align="left">
-        <img width="20%" src="https://raw.githubusercontent.com/quarterblue/pulse/main/static/pulselogo.png?token=ANKI23IIVVHEVMOXEEE4OYTBUP3DY" alt="Parsec logo">
+        <img width="20%" src="https://raw.githubusercontent.com/quarterblue/pulse/main/static/pulsesvg.svg" alt="Parsec logo">
 </p>
 
 ---
