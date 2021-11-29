@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="639" height="164" viewBox="0 0 639 164">
+  <defs>
+    <clipPath id="clip-Web_1920_1">
+      <rect width="639" height="164"/>
+    </clipPath>
+  </defs>
+  <g id="Web_1920_1" data-name="Web 1920 – 1" clip-path="url(#clip-Web_1920_1)">
+    <g id="Rectangle_1" data-name="Rectangle 1" fill="#00b0cb" stroke="#00b0cb" stroke-width="1">
+      <rect width="525" height="164" stroke="none"/>
+      <rect x="0.5" y="0.5" width="524" height="163" fill="none"/>
+    </g>
+    <text id="Pulse." transform="translate(138 112)" fill="#fff" font-size="90" font-family="ConsolasNerdFontCompleteM-, Consolas NF"><tspan x="0" y="0">Pulse.</tspan></text>
+    <rect id="Rectangle_2" data-name="Rectangle 2" width="46" height="164" transform="translate(535)" fill="#00b0cb"/>
+    <rect id="Rectangle_3" data-name="Rectangle 3" width="26" height="164" transform="translate(591)" fill="#00b0cb"/>
+    <rect id="Rectangle_4" data-name="Rectangle 4" width="12" height="164" transform="translate(627)" fill="#00b0cb"/>
+  </g>
+</svg>
